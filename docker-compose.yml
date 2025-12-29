@@ -1,0 +1,39 @@
+services:
+  redeem-api:
+    build: .
+    container_name: redeem-api
+    volumes:
+      - .:/var/www
+    depends_on:
+      - redis
+
+  redeem-queue:
+    build: .
+    container_name: redeem-queue
+    command: php artisan queue:work --tries=3
+    volumes:
+      - .:/var/www
+    depends_on:
+      - redis
+
+  nginx:
+    image: nginx:alpine
+    container_name: redeem-nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - redeem-api
+
+  redis:
+    image: redis:7-alpine
+    container_name: redeem-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
