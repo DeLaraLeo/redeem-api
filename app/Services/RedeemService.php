@@ -22,8 +22,7 @@ class RedeemService
         private GiftCodeRepositoryInterface $giftCodeRepository,
         private RedemptionRepositoryInterface $redemptionRepository,
         private EventIdGenerator $eventIdGenerator,
-    ) {    
-    }
+    ) {}
 
     public function redeem(string $code, string $email): RedeemResponse
     {
@@ -35,10 +34,7 @@ class RedeemService
         }
 
         return $this->executeWithLock($code, function () use ($code, $email, $eventId) {
-            $freshGiftCode = $this->ensureCodeExists(
-                $this->giftCodeRepository->findByCode($code),
-                $code
-            );
+            $freshGiftCode = $this->findGiftCodeOrFail($code);
 
             $this->ensureCodeIsAvailable($freshGiftCode);
             $this->processRedemption($code, $eventId, $email, $freshGiftCode);
@@ -72,15 +68,6 @@ class RedeemService
     private function isAlreadyRedeemed(string $eventId): bool
     {
         return $this->redemptionRepository->findByEventId($eventId) !== null;
-    }
-
-    private function ensureCodeExists(?GiftCode $giftCode, string $code): GiftCode
-    {
-        if (!$giftCode) {
-            throw new GiftCodeNotFoundException($code);
-        }
-
-        return $giftCode;
     }
 
     private function ensureCodeIsAvailable(GiftCode $giftCode): void
