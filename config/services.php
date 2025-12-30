@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'giftflow' => [
+        'webhook_secret' => env('GIFTFLOW_WEBHOOK_SECRET', 'default-secret'),
+        'webhook_url' => env('GIFTFLOW_WEBHOOK_URL', 'http://nginx/api/webhook/issuer-platform'),
+    ],
+
 ];

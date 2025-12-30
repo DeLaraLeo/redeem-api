@@ -2,6 +2,15 @@
 
 namespace App\Providers;
 
+use App\Repositories\GiftCodeRepositoryInterface;
+use App\Repositories\RedemptionRepositoryInterface;
+use App\Repositories\ReceivedWebhookRepositoryInterface;
+use App\Repositories\RedisGiftCodeRepository;
+use App\Repositories\RedisRedemptionRepository;
+use App\Repositories\RedisReceivedWebhookRepository;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +20,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(
+            GiftCodeRepositoryInterface::class,
+            RedisGiftCodeRepository::class
+        );
+
+        $this->app->bind(
+            RedemptionRepositoryInterface::class,
+            RedisRedemptionRepository::class
+        );
+
+        $this->app->bind(
+            ReceivedWebhookRepositoryInterface::class,
+            RedisReceivedWebhookRepository::class
+        );
     }
 
     /**
@@ -19,6 +41,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(30)->by($request->ip());
+        });
     }
 }

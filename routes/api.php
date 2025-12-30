@@ -1,6 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\RedeemController;
+use App\Http\Controllers\WebhookController;
+
 
 Route::get('/health', function () {
     return response()->json([
@@ -10,4 +13,6 @@ Route::get('/health', function () {
     ]);
 });
 
+Route::post('/redeem', [RedeemController::class, 'redeem']);
 
+Route::post('/webhook/issuer-platform', [WebhookController::class, 'handle']);
