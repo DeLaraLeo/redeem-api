@@ -8,13 +8,13 @@ class WebhookSignatureService
 
     public function __construct()
     {
-        $this->secret = config('services.giftflow.webhook_secret', 'default-secret');
+        $this->secret = config('giftflow.webhook.secret', 'default-secret');
     }
 
     public function verify(string $payload, string $signature): bool
     {
         $expectedSignature = $this->sign($payload);
-        
+
         return hash_equals($expectedSignature, $signature);
     }
 

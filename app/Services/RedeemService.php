@@ -15,9 +15,6 @@ use Illuminate\Support\Facades\Cache;
 
 class RedeemService
 {
-    private const LOCK_TIMEOUT_SECONDS = 10;
-    private const LOCK_WAIT_SECONDS = 5;
-
     public function __construct(
         private GiftCodeRepositoryInterface $giftCodeRepository,
         private RedemptionRepositoryInterface $redemptionRepository,
@@ -45,10 +42,10 @@ class RedeemService
 
     private function executeWithLock(string $code, callable $callback): RedeemResponse
     {
-        $lock = Cache::lock("redeem:{$code}", self::LOCK_TIMEOUT_SECONDS);
+        $lock = Cache::lock("redeem:{$code}", config('giftflow.lock.timeout'));
 
         try {
-            return $lock->block(self::LOCK_WAIT_SECONDS, $callback);
+            return $lock->block(config('giftflow.lock.wait'), $callback);
         } catch (LockTimeoutException) {
             throw new \App\Exceptions\LockAcquisitionException($code);
         }

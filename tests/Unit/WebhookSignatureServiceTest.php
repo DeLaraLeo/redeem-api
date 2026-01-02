@@ -7,7 +7,7 @@ uses(TestCase::class);
 
 describe('WebhookSignatureService', function () {
     beforeEach(function () {
-        config(['services.giftflow.webhook_secret' => 'test-secret-key']);
+        config(['giftflow.webhook.secret' => 'test-secret-key']);
         $this->signatureService = new WebhookSignatureService();
     });
 

@@ -34,7 +34,7 @@ class SendWebhookJob implements ShouldQueue
         $payload = $this->buildPayload();
         $jsonPayload = json_encode($payload);
         $signature = $signatureService->sign($jsonPayload);
-        $webhookUrl = config('services.giftflow.webhook_url');
+        $webhookUrl = config('giftflow.webhook.url');
 
         Log::info('Webhook sending', [
             'event_id' => $this->eventId,
