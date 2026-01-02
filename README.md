@@ -81,21 +81,26 @@ sequenceDiagram
 ## Local Setup
 
 ```bash
-# Copy environment file
+# 1. Configure environment
 cp .env.example .env
 
-# Start containers
+# 2. Start containers
 docker compose up --build -d
 
-# Generate application key
+# 3. Generate application key
 docker compose exec redeem-api php artisan key:generate
 
-# Seed initial data
+# 4. Seed initial data
 docker compose exec redeem-api php artisan giftflow:seed
+```
 
-# Start queue worker (in a separate terminal)
+### Watch queue in real-time (optional)
+
+```bash
 docker compose exec redeem-api php artisan queue:work
 ```
+
+> **Note:** The `redeem-queue` container processes jobs automatically. This command is for observing jobs in real-time.
 
 ## Running Tests
 
