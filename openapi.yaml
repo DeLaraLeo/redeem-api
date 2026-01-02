@@ -1,0 +1,219 @@
+openapi: 3.0.3
+info:
+  title: GiftFlow Redeem API
+  description: Gift card redemption API with webhook notifications
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+
+paths:
+  /api/redeem:
+    post:
+      summary: Redeem a gift code
+      description: Validates and redeems a gift code, dispatching a webhook to the issuer platform
+      operationId: redeemGiftCode
+      tags:
+        - Redemption
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RedeemRequest'
+            example:
+              code: "GFLOW-TEST-0001"
+              user:
+                email: "user@example.com"
+      responses:
+        '200':
+          description: Gift code redeemed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RedeemResponse'
+        '404':
+          description: Gift code not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "not_found"
+                message: "Gift code 'INVALID-CODE' not found."
+        '409':
+          description: Gift code already redeemed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "already_redeemed"
+                message: "Gift code 'GFLOW-TEST-0001' has already been redeemed."
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /api/webhook/issuer-platform:
+    post:
+      summary: Receive webhook from GiftFlow
+      description: Mock endpoint that receives webhook notifications when a gift code is redeemed. Validates signature and ensures idempotency.
+      operationId: receiveWebhook
+      tags:
+        - Webhook
+      parameters:
+        - name: X-GiftFlow-Signature
+          in: header
+          required: true
+          description: HMAC-SHA256 signature of the request body
+          schema:
+            type: string
+          example: "a1b2c3d4e5f6..."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookPayload'
+      responses:
+        '200':
+          description: Webhook received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSuccessResponse'
+        '401':
+          description: Invalid signature
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "invalid_signature"
+                message: "Webhook signature validation failed."
+
+components:
+  schemas:
+    RedeemRequest:
+      type: object
+      required:
+        - code
+        - user
+      properties:
+        code:
+          type: string
+          description: The gift code to redeem
+          example: "GFLOW-TEST-0001"
+        user:
+          type: object
+          required:
+            - email
+          properties:
+            email:
+              type: string
+              format: email
+              description: Email of the user redeeming the code
+              example: "user@example.com"
+
+    RedeemResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [redeemed]
+              example: "redeemed"
+            code:
+              type: string
+              example: "GFLOW-TEST-0001"
+            creator_id:
+              type: string
+              example: "creator_123"
+            product_id:
+              type: string
+              example: "product_abc"
+            webhook:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [queued]
+                  example: "queued"
+                event_id:
+                  type: string
+                  example: "evt_abc123def456"
+
+    WebhookPayload:
+      type: object
+      required:
+        - event_id
+        - type
+        - data
+        - sent_at
+      properties:
+        event_id:
+          type: string
+          description: Unique identifier for this event (used for idempotency)
+          example: "evt_abc123def456"
+        type:
+          type: string
+          enum: [giftcard.redeemed]
+          example: "giftcard.redeemed"
+        data:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "GFLOW-TEST-0001"
+            email:
+              type: string
+              example: "user@example.com"
+            creator_id:
+              type: string
+              example: "creator_123"
+            product_id:
+              type: string
+              example: "product_abc"
+        sent_at:
+          type: string
+          format: date-time
+          example: "2025-01-02T12:00:00Z"
+
+    WebhookSuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Webhook received."
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "not_found"
+        message:
+          type: string
+          example: "Gift code 'INVALID-CODE' not found."
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "The user is required (and 1 more error)"
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            user: ["The user is required"]
+            user.email: ["The user email is required"]

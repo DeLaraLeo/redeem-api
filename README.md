@@ -214,6 +214,7 @@ All application settings are configurable via `.env`, following 12-factor app pr
 | Service | URL |
 |---------|-----|
 | API | http://localhost:8000 |
+| Swagger UI (API Docs) | http://localhost:8082 |
 | Redis Commander | http://localhost:8081 |
 
 ## Real-time Logs
